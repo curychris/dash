@@ -1,35 +1,24 @@
 const express = require('express');
-const fetch = require('node-fetch');
 const Chart = require('chart.js/auto');
-require('dotenv').config(); // Mengimpor dan mengonfigurasi dotenv
+require('dotenv').config();
+
 const app = express();
-const PORT = process.env.PORT || 5000; // Menggunakan nilai PORT dari variabel lingkungan atau default 3000
+const PORT = process.env.PORT || 5000;
 
 app.use(express.static('public'));
 
-app.get('/', (req, res) => {
-    res.sendFile(__dirname + '/public/index.html');
-});
+// Fungsi untuk mendapatkan timestamp millis()
+function getMillisTimestamp() {
+    return Date.now(); // Simulasi millis() dari IoT
+}
 
+// Endpoint untuk mendapatkan data sensor terbaru
 app.get('/data', async (req, res) => {
     try {
-        const response = await fetch(process.env.API_URL);
-        if (!response.ok) {
-            throw new Error(`Failed to fetch data: ${response.status} ${response.statusText}`);
-        }
-        let data = await response.json();
-        // Urutkan data berdasarkan timestamp secara menurun
-        data.sort((a, b) => (a.timestamp < b.timestamp) ? 1 : -1);
-        // Batasi jumlah data yang ditampilkan menjadi 20
-        data = data.slice(0, 20);
-        // Pilih hanya nilai yang diperlukan
-        data = data.map(entry => ({
-            temperature: entry.temperature,
-            humidity: entry.humidity,
-            fire_intensity: entry.fire_intensity,
-            gasconcentration: entry.gasconcentration,
-            timestamp: entry.timestamp
-        }));
+        let data = [
+            { timestamp: getMillisTimestamp(), temperature: 27.9, humidity: 43.5 },
+        ];
+
         res.json(data);
     } catch (error) {
         console.error('Error fetching data:', error);
