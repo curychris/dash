@@ -3,64 +3,75 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chart Data</title>
-    <!-- Masukkan CDN Chart.js di sini -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>IoT Monitoring</title>
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        .chart-container {
+            display: flex;
+            justify-content: center;
+            gap: 50px;
+            margin-top: 20px;
+        }
+    </style>
 </head>
 <body>
-    <h1>Chart Data</h1>
-    <canvas id="myChart"></canvas>
+    <h2>IoT Monitoring</h2>
+    <p>Server IP Address: ::1</p>
+    
+    <div class="chart-container">
+        <div id="humidity_chart"></div>
+        <div id="temperature_chart"></div>
+    </div>
 
     <script>
-        // Panggil API untuk mendapatkan data
-        fetch('/data')
-            .then(response => response.json())
-            .then(data => {
-                // Proses data untuk digunakan dalam Chart.js
-                const labels = data.map(entry => entry.timestamp);
-                const temperatureData = data.map(entry => entry.temperature);
-                const humidityData = data.map(entry => entry.humidity);
-                const fireIntensityData = data.map(entry => entry.fire_intensity);
-                const gasConcentrationData = data.map(entry => entry.gasconcentration);
+        google.charts.load('current', {'packages':['gauge']});
+        google.charts.setOnLoadCallback(drawCharts);
 
-                // Buat chart menggunakan Chart.js
-                const ctx = document.getElementById('myChart').getContext('2d');
-                const myChart = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            label: 'Temperature',
-                            data: temperatureData,
-                            borderColor: 'red',
-                            backgroundColor: 'rgba(255, 0, 0, 0.1)',
-                        }, {
-                            label: 'Humidity',
-                            data: humidityData,
-                            borderColor: 'blue',
-                            backgroundColor: 'rgba(0, 0, 255, 0.1)',
-                        }, {
-                            label: 'Fire Intensity',
-                            data: fireIntensityData,
-                            borderColor: 'orange',
-                            backgroundColor: 'rgba(255, 165, 0, 0.1)',
-                        }, {
-                            label: 'Gas Concentration',
-                            data: gasConcentrationData,
-                            borderColor: 'green',
-                            backgroundColor: 'rgba(0, 128, 0, 0.1)',
-                        }]
-                    },
-                    options: {
-                        scales: {
-                            y: {
-                                beginAtZero: true
-                            }
+        function drawCharts() {
+            let humidityData = google.visualization.arrayToDataTable([
+                ['Label', 'Value'],
+                ['Humidity', 0]
+            ]);
+            let tempData = google.visualization.arrayToDataTable([
+                ['Label', 'Value'],
+                ['Temperature', 0]
+            ]);
+
+            let options = {
+                width: 300, height: 300,
+                redFrom: 90, redTo: 100,
+                yellowFrom: 75, yellowTo: 90,
+                minorTicks: 5
+            };
+
+            let humidityChart = new google.visualization.Gauge(document.getElementById('humidity_chart'));
+            let tempChart = new google.visualization.Gauge(document.getElementById('temperature_chart'));
+
+            humidityChart.draw(humidityData, options);
+            tempChart.draw(tempData, options);
+
+            function fetchData() {
+                fetch('/data')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.length > 0) {
+                            let latest = data[0];
+                            humidityData.setValue(0, 1, latest.humidity);
+                            tempData.setValue(0, 1, latest.temperature);
+                            humidityChart.draw(humidityData, options);
+                            tempChart.draw(tempData, options);
                         }
-                    }
-                });
-            })
-            .catch(error => console.error('Error fetching data:', error));
+                    })
+                    .catch(error => console.error('Error fetching data:', error));
+            }
+
+            fetchData();
+            setInterval(fetchData, 5000);
+        }
     </script>
 </body>
 </html>
