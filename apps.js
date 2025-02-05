@@ -1,9 +1,9 @@
 const express = require('express');
+const fetch = require('node-fetch');
 const Chart = require('chart.js/auto');
-require('dotenv').config(); 
-
+require('dotenv').config(); // Mengimpor dan mengonfigurasi dotenv
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5000; // Menggunakan nilai PORT dari variabel lingkungan atau default 3000
 
 app.use(express.static('public'));
 
@@ -13,16 +13,23 @@ app.get('/', (req, res) => {
 
 app.get('/data', async (req, res) => {
     try {
-        // Mock data (data dummy untuk testing)
-        let data = [
-            { timestamp: "2025-02-05T10:00:00Z", temperature: 25, humidity: 60, fire_intensity: 5, gasconcentration: 10 },
-            { timestamp: "2025-02-05T10:05:00Z", temperature: 26, humidity: 58, fire_intensity: 6, gasconcentration: 12 },
-            { timestamp: "2025-02-05T10:10:00Z", temperature: 27, humidity: 57, fire_intensity: 7, gasconcentration: 14 }
-        ];
-
-        // Urutkan data berdasarkan timestamp terbaru
+        const response = await fetch(process.env.API_URL);
+        if (!response.ok) {
+            throw new Error(`Failed to fetch data: ${response.status} ${response.statusText}`);
+        }
+        let data = await response.json();
+        // Urutkan data berdasarkan timestamp secara menurun
         data.sort((a, b) => (a.timestamp < b.timestamp) ? 1 : -1);
-
+        // Batasi jumlah data yang ditampilkan menjadi 20
+        data = data.slice(0, 20);
+        // Pilih hanya nilai yang diperlukan
+        data = data.map(entry => ({
+            temperature: entry.temperature,
+            humidity: entry.humidity,
+            fire_intensity: entry.fire_intensity,
+            gasconcentration: entry.gasconcentration,
+            timestamp: entry.timestamp
+        }));
         res.json(data);
     } catch (error) {
         console.error('Error fetching data:', error);
@@ -32,4 +39,3 @@ app.get('/data', async (req, res) => {
 
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
-});
