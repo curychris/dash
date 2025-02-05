@@ -16,12 +16,18 @@
             gap: 50px;
             margin-top: 20px;
         }
+        #timestamp {
+            font-size: 14px;
+            color: gray;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
     <h2>IoT Monitoring</h2>
     <p>Server IP Address: ::1</p>
-    
+    <p id="timestamp">Last Update: --</p>
+
     <div class="chart-container">
         <div id="humidity_chart"></div>
         <div id="temperature_chart"></div>
@@ -60,10 +66,17 @@
                     .then(data => {
                         if (data.length > 0) {
                             let latest = data[0];
+
+                            // Update chart data
                             humidityData.setValue(0, 1, latest.humidity);
                             tempData.setValue(0, 1, latest.temperature);
                             humidityChart.draw(humidityData, options);
                             tempChart.draw(tempData, options);
+
+                            // Konversi timestamp ke format waktu
+                            let date = new Date(latest.timestamp);
+                            let formattedTime = date.toLocaleTimeString();
+                            document.getElementById('timestamp').innerText = `Last Update: ${formattedTime}`;
                         }
                     })
                     .catch(error => console.error('Error fetching data:', error));
